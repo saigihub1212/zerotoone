@@ -57,7 +57,7 @@ def generate_single_poster(image_path, output_filename):
     # --- Insert user image ---
     if os.path.exists(image_path):
         inner_w = frame_width - 80
-        inner_h = frame_height - 280
+        inner_h = frame_height - 240
         user_img = Image.open(image_path).convert("RGBA")
         
         img_aspect = user_img.width / user_img.height
@@ -94,20 +94,54 @@ def generate_single_poster(image_path, output_filename):
     )
     f_draw.rectangle([50, 50 + frame_height - 200, 50 + frame_width, 50 + frame_height - 150], fill=yellow)
 
+    # 6. Typography (Draw on frame before rotation)
+    try:
+        font_path = "C:\\Windows\\Fonts\\georgiab.ttf"
+        if not os.path.exists(font_path): font_path = "arial.ttf"
+        font = ImageFont.truetype(font_path, 60)
+    except:
+        font = ImageFont.load_default()
+
+    hashtag = "#bootcamp2026"
+    try:
+        text_bbox = f_draw.textbbox((0, 0), hashtag, font=font)
+        text_w = text_bbox[2] - text_bbox[0]
+        text_h = text_bbox[3] - text_bbox[1]
+        text_y_offset = text_bbox[1]
+    except AttributeError:
+        text_w = font.getlength(hashtag) if hasattr(font, 'getlength') else len(hashtag) * 35
+        text_h = 60
+        text_y_offset = 0
+
+    text_x = 50 + frame_width // 2 - text_w // 2
+    text_y = 50 + frame_height - 100 - text_h // 2 - text_y_offset
+    f_draw.text((text_x, text_y), hashtag, fill=maroon, font=font)
+
     # Transform and Paste
     frame_final = frame_layer.rotate(2, expand=True, resample=Image.BICUBIC)
     img.paste(frame_final, (100, 250), frame_final)
     
     # 4. Draw Floating Bubbles
-    def draw_bubble(img_draw, x, y, icon_type, rotation=0):
+    def draw_bubble(img_draw, x, y, icon_type, rotation=0, tail_pos='bottom_right'):
         bubble_size = 180
-        bubble_layer = Image.new('RGBA', (bubble_size + 40, bubble_size + 40), (0, 0, 0, 0))
+        bubble_layer = Image.new('RGBA', (bubble_size + 80, bubble_size + 80), (0, 0, 0, 0))
         b_draw = ImageDraw.Draw(bubble_layer)
-        b_draw.rounded_rectangle([15, 15, 15+bubble_size, 15+bubble_size], radius=40, fill=(0,0,0,30))
-        b_draw.rounded_rectangle([10, 10, 10+bubble_size, 10+bubble_size], radius=40, fill=yellow)
-        b_draw.polygon([(bubble_size//2 - 20, 10+bubble_size), (bubble_size//2 + 20, 10+bubble_size), (bubble_size//2, 10+bubble_size + 30)], fill=yellow)
         
-        ic_center = (10 + bubble_size//2, 10 + bubble_size//2)
+        # padding is 40
+        b_draw.rounded_rectangle([45, 45, 45+bubble_size, 45+bubble_size], radius=40, fill=(0,0,0,30))
+        b_draw.rounded_rectangle([40, 40, 40+bubble_size, 40+bubble_size], radius=40, fill=yellow)
+        
+        # tails
+        if tail_pos == 'bottom_right':
+            b_draw.polygon([(40+bubble_size - 60, 40+bubble_size), (40+bubble_size - 20, 40+bubble_size), (40+bubble_size - 20, 40+bubble_size + 30)], fill=yellow)
+        elif tail_pos == 'bottom_left':
+            b_draw.polygon([(40 + 20, 40+bubble_size), (40 + 60, 40+bubble_size), (40 + 20, 40+bubble_size + 30)], fill=yellow)
+        elif tail_pos == 'top_right':
+            b_draw.polygon([(40+bubble_size - 60, 40), (40+bubble_size - 20, 40), (40+bubble_size - 20, 40 - 30)], fill=yellow)
+        elif tail_pos == 'top_left':
+            b_draw.polygon([(40 + 20, 40), (40 + 60, 40), (40 + 20, 40 - 30)], fill=yellow)
+            
+        ic_center = (40 + bubble_size//2, 40 + bubble_size//2)
         if icon_type == 'robot':
             b_draw.rectangle([ic_center[0]-30, ic_center[1]-20, ic_center[0]+30, ic_center[1]+30], fill=maroon)
             b_draw.rectangle([ic_center[0]-20, ic_center[1]-45, ic_center[0]+20, ic_center[1]-25], fill=maroon)
@@ -121,15 +155,15 @@ def generate_single_poster(image_path, output_filename):
             b_draw.line([ic_center[0]-20, ic_center[1], ic_center[0]+20, ic_center[1]], fill=red_accent, width=4)
         elif icon_type == 'media':
             b_draw.rounded_rectangle([ic_center[0]-45, ic_center[1]-30, ic_center[0]+45, ic_center[1]+30], radius=15, fill=maroon)
-            b_draw.polygon([(ic_center[0]-15, ic_center[1]-15), (ic_center[0]+20, ic_center[1]), (ic_center[0]-15, ic_center[1]+15)], fill=red_accent)
+            b_draw.polygon([(ic_center[0]-15, ic_center[1]-15), (ic_center[0]+20, ic_center[1]), (ic_center[0]-15, ic_center[1]+15)], fill=yellow, outline=red_accent)
 
         bubble_layer = bubble_layer.rotate(rotation, expand=True, resample=Image.BICUBIC)
         img.paste(bubble_layer, (x, y), bubble_layer)
 
-    draw_bubble(img, 80, 200, 'robot', -10)
-    draw_bubble(img, width-280, 180, 'iot', 10)
-    draw_bubble(img, 120, height-500, 'ai', 5)
-    draw_bubble(img, width-300, height-480, 'media', -8)
+    draw_bubble(img, 20, 100, 'robot', -10, 'bottom_right')
+    draw_bubble(img, width-260, 100, 'iot', 10, 'bottom_left')
+    draw_bubble(img, 20, height-380, 'ai', 5, 'top_right')
+    draw_bubble(img, width-260, height-380, 'media', -8, 'top_left')
 
     # 5. UI Pills
     def draw_pill(img_draw, x, y, text_type, rotation=0):
@@ -138,15 +172,27 @@ def generate_single_poster(image_path, output_filename):
         p_draw = ImageDraw.Draw(pill_layer)
         p_draw.rounded_rectangle([10, 10, 10+pill_w, 10+pill_h], radius=50, fill=(0,0,0,50))
         p_draw.rounded_rectangle([5, 5, 5+pill_w, 5+pill_h], radius=50, fill=maroon)
-        p_draw.pieslice([5, 5, 5+pill_w, 5+pill_h*2], 180, 0, fill=(255,255,255,30))
         
         if text_type == 'stars':
+            import math
             for i in range(4):
                 star_x = 50 + i * 60
-                p_draw.ellipse([star_x, 30, star_x+40, 70], fill=red_accent)
+                star_center_x = star_x + 20
+                star_center_y = 50
+                pts = []
+                for j in range(10):
+                    angle = j * math.pi / 5 - math.pi / 2
+                    r = 20 if j % 2 == 0 else 8
+                    pts.append((star_center_x + r * math.cos(angle), star_center_y + r * math.sin(angle)))
+                p_draw.polygon(pts, fill=red_accent)
         elif text_type == 'chat':
+            # Chat bubble icon with a tail
             p_draw.ellipse([30, 30, 80, 70], outline=(255,255,255), width=3)
-            p_draw.line([100, 40, 280, 40], fill=(255,255,255), width=4)
+            p_draw.line([(45, 65), (35, 80), (55, 65)], fill=(255,255,255), width=3)
+            # Three red horizontal lines
+            p_draw.line([100, 35, 280, 35], fill=red_accent, width=4)
+            p_draw.line([100, 50, 280, 50], fill=red_accent, width=4)
+            p_draw.line([100, 65, 280, 65], fill=red_accent, width=4)
 
         pill_layer = pill_layer.rotate(rotation, expand=True, resample=Image.BICUBIC)
         img.paste(pill_layer, (x, y), pill_layer)
@@ -154,25 +200,7 @@ def generate_single_poster(image_path, output_filename):
     draw_pill(img, -80, height // 2 + 100, 'stars', -10)
     draw_pill(img, width - 240, height // 2 - 300, 'chat', 5)
 
-    # 6. Typography
-    try:
-        font_path = "C:\\Windows\\Fonts\\georgiab.ttf"
-        if not os.path.exists(font_path): font_path = "arial.ttf"
-        font = ImageFont.truetype(font_path, 80)
-    except:
-        font = ImageFont.load_default()
 
-    hashtag = "#bootcamp2026"
-    text_bbox = draw.textbbox((0, 0), hashtag, font=font)
-    text_w = text_bbox[2] - text_bbox[0]
-    text_x = width // 2 - text_w // 2
-    text_y = 1530 
-    
-    txt_layer = Image.new('RGBA', (width, height), (0,0,0,0))
-    t_draw = ImageDraw.Draw(txt_layer)
-    t_draw.text((text_x, text_y), hashtag, fill=maroon, font=font)
-    txt_layer = txt_layer.rotate(2, expand=False, resample=Image.BICUBIC)
-    img.paste(txt_layer, (0, 0), txt_layer)
 
     img.save(output_filename)
     print(f"Poster saved as {output_filename}")
