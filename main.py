@@ -26,7 +26,7 @@ HEIGHT = 1920
 
 placeholders = [
     {
-        "image": "image1.png",
+        "image": "bootcamp_poster_1.png",
         "start": 0,      # Start at 1s
         "end": 4,        # End at 4s
         "x": X_POS,
@@ -34,7 +34,7 @@ placeholders = [
         "size": (WIDTH, HEIGHT)
     },
     {
-        "image": "image2.png",
+        "image": "bootcamp_poster_2.png",
         "start": 22,     # Start at 23s
         "end": 25,       # End at 25s
         "x": X_POS,
@@ -42,7 +42,7 @@ placeholders = [
         "size": (WIDTH, HEIGHT)
     },
     {
-        "image": "image3.png",
+        "image": "bootcamp_poster_3.png",
         "start": 45,     # Start at 45s
         "end": video.duration,
         "x": X_POS,
